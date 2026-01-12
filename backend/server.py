@@ -152,10 +152,10 @@ async def register(req: RegisterRequest, response: Response):
 async def login(req: LoginRequest, response: Response):
     users_df = read_users()
     
-    # Find user
+    # Find user - convert PIN to string for comparison
     user = users_df[
         (users_df['name'] == req.name) & 
-        (users_df['pin'] == req.pin)
+        (users_df['pin'].astype(str) == req.pin)
     ]
     
     if user.empty:
