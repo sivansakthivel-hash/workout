@@ -195,13 +195,29 @@ class WorkoutStreakAPITester:
 
     def test_dashboard_unauthenticated(self):
         """Test dashboard access without authentication"""
-        success, response = self.run_test(
-            "Dashboard Access - Unauthenticated",
-            "GET",
-            "dashboard",
-            401
-        )
-        return success
+        # Use a fresh session without cookies
+        fresh_session = requests.Session()
+        url = f"{self.api_url}/dashboard"
+        headers = {'Content-Type': 'application/json'}
+        
+        try:
+            response = fresh_session.get(url, headers=headers)
+            success = response.status_code == 401
+            details = f"Status: {response.status_code}, Expected: 401"
+            
+            if not success:
+                try:
+                    error_detail = response.json().get('detail', 'No error detail')
+                    details += f", Error: {error_detail}"
+                except:
+                    details += f", Response: {response.text[:100]}"
+            
+            self.log_test("Dashboard Access - Unauthenticated", success, details)
+            return success
+            
+        except Exception as e:
+            self.log_test("Dashboard Access - Unauthenticated", False, f"Exception: {str(e)}")
+            return False
 
     def test_mark_workout(self):
         """Test marking workout for today"""
