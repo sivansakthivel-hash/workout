@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Streak Tracker - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="dashboard">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div>
+                    <h1>💪 Workout Tracker</h1>
+                    <p class="welcome">Welcome, <span id="user-name">...</span>!</p>
+                </div>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card streak">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-content">
+                        <h3>Current Streak</h3>
+                        <p class="stat-value" id="current-streak">0</p>
+                        <small>days in a row</small>
+                    </div>
+                </div>
+
+                <div class="stat-card total">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3>Total Workouts</h3>
+                        <p class="stat-value" id="total-workouts">0</p>
+                        <small>all time</small>
+                    </div>
+                </div>
+
+                <div class="stat-card date">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <h3>Today</h3>
+                        <p class="stat-value" id="today-date">-</p>
+                        <small id="today-status">Not marked yet</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mark Workout Button -->
+            <div class="action-section">
+                <button id="mark-workout-btn" class="btn btn-primary btn-large">
+                    ✓ Mark Today's Workout
+                </button>
+                <p id="action-message" class="action-message"></p>
+            </div>
+
+
+            <!-- Leaderboard -->
+            <div class="leaderboard-section">
+                <h2>🏆 Leaderboard</h2>
+                <div id="leaderboard" class="leaderboard-list">
+                    <p class="loading">Loading leaderboard...</p>
+                </div>
+                <div class="pagination" id="leaderboard-pagination" style="display: none;">
+                    <button id="prev-page" class="pagination-btn">← Previous</button>
+                    <span id="page-info" class="page-info">Page 1</span>
+                    <button id="next-page" class="pagination-btn">Next →</button>
+                </div>
+            </div>
+
+            <!-- Workout History -->
+            <div class="history-section">
+                <h2>Recent Workout History</h2>
+                <div id="workout-history" class="history-list">
+                    <p class="loading">Loading history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        let dashboardData = null;
+
+        // Load dashboard data on page load
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    throw new Error('Failed to load dashboard');
+                }
+
+                dashboardData = await response.json();
+                updateDashboard(dashboardData);
+
+                // Load leaderboard
+                loadLeaderboard();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showActionMessage('Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Load leaderboard data
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load leaderboard');
+                }
+
+                const leaderboard = await response.json();
+                updateLeaderboard(leaderboard);
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                document.getElementById('leaderboard').innerHTML = '<p class="empty-state">Failed to load leaderboard</p>';
+            }
+        }
+
+        // Leaderboard pagination state
+        let allLeaderboardData = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        function updateLeaderboard(leaderboard) {
+            const leaderboardEl = document.getElementById('leaderboard');
+            const paginationEl = document.getElementById('leaderboard-pagination');
+
+            if (!leaderboard || leaderboard.length === 0) {
+                leaderboardEl.innerHTML = '<p class="empty-state">No users yet</p>';
+                paginationEl.style.display = 'none';
+                return;
+            }
+
+            // Store all data
+            allLeaderboardData = leaderboard;
+
+            // Show pagination if more than 10 items
+            if (leaderboard.length > itemsPerPage) {
+                paginationEl.style.display = 'flex';
+                renderLeaderboardPage(currentPage);
+            } else {
+                paginationEl.style.display = 'none';
+                renderLeaderboardItems(leaderboard);
+            }
+        }
+
+        function renderLeaderboardPage(page) {
+            const totalPages = Math.ceil(allLeaderboardData.length / itemsPerPage);
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = allLeaderboardData.slice(startIndex, endIndex);
+
+            renderLeaderboardItems(pageData);
+
+            // Update pagination controls
+            document.getElementById('page-info').textContent = `Page ${page} of ${totalPages}`;
+            document.getElementById('prev-page').disabled = page === 1;
+            document.getElementById('next-page').disabled = page === totalPages;
+        }
+
+        function renderLeaderboardItems(items) {
+            const leaderboardEl = document.getElementById('leaderboard');
+
+            leaderboardEl.innerHTML = items.map(entry => {
+                const rankBadge = entry.rank <= 3 ? getRankEmoji(entry.rank) : `#${entry.rank}`;
+                const currentUserClass = entry.is_current_user ? 'current-user' : '';
+
+                return `
+                    <div class="leaderboard-item ${currentUserClass}">
+                        <span class="leaderboard-rank">${rankBadge}</span>
+                        <span class="leaderboard-name">${entry.name}${entry.is_current_user ? ' (You)' : ''}</span>
+                        <div class="leaderboard-stats">
+                            <span class="leaderboard-streak">🔥 ${entry.current_streak}</span>
+                            <span class="leaderboard-total">📊 ${entry.total_workout_days}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Pagination button handlers
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderLeaderboardPage(currentPage);
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            const totalPages = Math.ceil(allLeaderboardData.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderLeaderboardPage(currentPage);
+            }
+        });
+
+        function getRankEmoji(rank) {
+            const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
+            return medals[rank] || `#${rank}`;
+        }
+
+        function updateDashboard(data) {
+            // Update user name
+            document.getElementById('user-name').textContent = data.name;
+
+            // Update stats
+            document.getElementById('current-streak').textContent = data.current_streak;
+            document.getElementById('total-workouts').textContent = data.total_workout_days;
+
+            // Update today's date
+            const today = new Date(data.today_date);
+            document.getElementById('today-date').textContent = today.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+
+            // Update today's status
+            const statusEl = document.getElementById('today-status');
+            const markBtn = document.getElementById('mark-workout-btn');
+
+            if (data.today_marked) {
+                statusEl.textContent = '✓ Completed';
+                statusEl.style.color = '#10b981';
+                markBtn.disabled = true;
+                markBtn.textContent = '✓ Already Marked Today';
+            } else {
+                statusEl.textContent = 'Not marked yet';
+                statusEl.style.color = '#6b7280';
+                markBtn.disabled = false;
+                markBtn.textContent = '✓ Mark Today\'s Workout';
+            }
+
+            // Update workout history
+            updateHistory(data.workout_history);
+        }
+
+        function updateHistory(history) {
+            const historyEl = document.getElementById('workout-history');
+
+            if (!history || history.length === 0) {
+                historyEl.innerHTML = '<p class="empty-state">No workout history yet. Start your streak today!</p>';
+                return;
+            }
+
+            historyEl.innerHTML = history.map(workout => {
+                const date = new Date(workout.date);
+                const dateStr = date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+
+                return `
+                    <div class="history-item">
+                        <span class="history-icon">✓</span>
+                        <span class="history-date">${dateStr}</span>
+                        <span class="history-status">${workout.status}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mark workout handler
+        document.getElementById('mark-workout-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('mark-workout-btn');
+            btn.disabled = true;
+            btn.textContent = 'Marking...';
+
+            try {
+                const response = await fetch('/api/mark-workout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showActionMessage(`🎉 ${result.message} Streak: ${result.streak} days!`, 'success');
+                    // Reload dashboard and leaderboard to update stats
+                    setTimeout(() => {
+                        loadDashboard();
+                        loadLeaderboard();
+                    }, 1000);
+                } else {
+                    showActionMessage(result.message || 'Failed to mark workout', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '✓ Mark Today\'s Workout';
+                }
+            } catch (error) {
+                showActionMessage('Network error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = '✓ Mark Today\'s Workout';
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/';
+            }
+        });
+
+        function showActionMessage(text, type) {
+            const messageEl = document.getElementById('action-message');
+            messageEl.textContent = text;
+            messageEl.className = `action-message ${type}`;
+            messageEl.style.display = 'block';
+
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -50,6 +51,13 @@ class DashboardResponse(BaseModel):
     last_workout_date: Optional[str]
     today_marked: bool
     workout_history: list
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    name: str
+    current_streak: int
+    total_workout_days: int
+    is_current_user: bool = False
 
 # Initialize Excel file if not exists
 def init_excel():
@@ -248,6 +256,52 @@ async def get_dashboard(session_id: Optional[str] = Cookie(None)):
         workout_history=workout_history
     )
 
+@api_router.get("/leaderboard")
+async def get_leaderboard(session_id: Optional[str] = Cookie(None)):
+    if not session_id or session_id not in sessions:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    current_user_id = sessions[session_id]['user_id']
+    
+    users_df = read_users()
+    workouts_df = read_workouts()
+    
+    # Calculate stats for all users
+    leaderboard = []
+    for _, user in users_df.iterrows():
+        user_id = int(user['user_id'])
+        name = user['name']
+        
+        # Calculate streak
+        current_streak = calculate_streak(user_id, workouts_df)
+        
+        # Calculate total workout days
+        user_workouts = workouts_df[
+            (workouts_df['user_id'] == user_id) & 
+            (workouts_df['workout_done'] == True)
+        ]
+        total_workout_days = len(user_workouts)
+        
+        # Only include users with at least 1 streak or 1 workout day
+        if current_streak > 0 or total_workout_days > 0:
+            leaderboard.append({
+                'user_id': user_id,
+                'name': name,
+                'current_streak': current_streak,
+                'total_workout_days': total_workout_days,
+                'is_current_user': user_id == current_user_id
+            })
+    
+    # Sort by streak (descending), then by total days (descending)
+    leaderboard.sort(key=lambda x: (x['current_streak'], x['total_workout_days']), reverse=True)
+    
+    # Add ranks
+    for idx, entry in enumerate(leaderboard, 1):
+        entry['rank'] = idx
+        del entry['user_id']  # Remove user_id from response
+    
+    return leaderboard
+
 @api_router.post("/mark-workout", response_model=MarkWorkoutResponse)
 async def mark_workout(session_id: Optional[str] = Cookie(None)):
     if not session_id or session_id not in sessions:
@@ -311,24 +365,22 @@ async def mark_workout(session_id: Optional[str] = Cookie(None)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Get CORS origins - support both wildcard and specific origins
-cors_origins_str = os.environ.get('CORS_ORIGINS', '*')
-if cors_origins_str == '*':
-    # For credentials mode, we need specific origins
-    cors_origins = [
-        "http://localhost:3000",
-        "https://streakfit.preview.emergentagent.com"
-    ]
-else:
-    cors_origins = cors_origins_str.split(',')
-
+# Simplified CORS for same-origin (static files served from same server)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=cors_origins,
+    allow_origins=["*"],  # Same origin, so this is safe
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=ROOT_DIR / "static"), name="static")
+
+# Serve index.html at root
+@app.get("/")
+async def read_root():
+    return FileResponse(ROOT_DIR / "static" / "index.html")
 
 # Configure logging
 logging.basicConfig(
