@@ -12,8 +12,8 @@ services:
     volumes:
       # Mount code for hot-reload during development
       - ./backend:/app
-      # Mount Excel data file as persistent volume
-      - workout-data:/app/data
+      # Use a local folder for data so it's visible on the host
+      - ./backend/data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
