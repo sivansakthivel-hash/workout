@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "total_tests": 18,
+    "passed_tests": 12,
+    "success_rate": "66.7%",
+    "timestamp": "2026-01-12T18:19:40.155921"
+  },
+  "detailed_results": [
+    {
+      "test": "User Registration - Valid Data",
+      "success": true,
+      "details": "Status: 200, Expected: 200",
+      "timestamp": "2026-01-12T18:19:39.802871"
+    },
+    {
+      "test": "User Registration - Duplicate User",
+      "success": true,
+      "details": "Status: 400, Expected: 400",
+      "timestamp": "2026-01-12T18:19:39.822175"
+    },
+    {
+      "test": "User Registration - Invalid PIN (3 digits)",
+      "success": true,
+      "details": "Status: 400, Expected: 400",
+      "timestamp": "2026-01-12T18:19:39.876926"
+    },
+    {
+      "test": "User Registration - Invalid PIN (5 digits)",
+      "success": true,
+      "details": "Status: 400, Expected: 400",
+      "timestamp": "2026-01-12T18:19:39.889420"
+    },
+    {
+      "test": "User Registration - Invalid PIN (non-numeric)",
+      "success": true,
+      "details": "Status: 400, Expected: 400",
+      "timestamp": "2026-01-12T18:19:39.903556"
+    },
+    {
+      "test": "User Registration - Invalid PIN (empty PIN)",
+      "success": true,
+      "details": "Status: 400, Expected: 400",
+      "timestamp": "2026-01-12T18:19:39.955971"
+    },
+    {
+      "test": "User Login - Valid Credentials",
+      "success": false,
+      "details": "Status: 401, Expected: 200, Error: Invalid name or PIN",
+      "timestamp": "2026-01-12T18:19:40.008713"
+    },
+    {
+      "test": "User Login - Invalid (Non-existent user)",
+      "success": true,
+      "details": "Status: 401, Expected: 401",
+      "timestamp": "2026-01-12T18:19:40.018771"
+    },
+    {
+      "test": "User Login - Invalid (Wrong PIN)",
+      "success": true,
+      "details": "Status: 401, Expected: 401",
+      "timestamp": "2026-01-12T18:19:40.029457"
+    },
+    {
+      "test": "Dashboard Access - Unauthenticated",
+      "success": false,
+      "details": "Status: 200, Expected: 401, Error: No error detail",
+      "timestamp": "2026-01-12T18:19:40.082280"
+    },
+    {
+      "test": "Dashboard Access - Authenticated",
+      "success": false,
+      "details": "No auth cookies available",
+      "timestamp": "2026-01-12T18:19:40.082319"
+    },
+    {
+      "test": "Mark Workout - First Time",
+      "success": false,
+      "details": "No auth cookies available",
+      "timestamp": "2026-01-12T18:19:40.082328"
+    },
+    {
+      "test": "Mark Workout - Duplicate",
+      "success": false,
+      "details": "No auth cookies available",
+      "timestamp": "2026-01-12T18:19:40.082335"
+    },
+    {
+      "test": "Logout",
+      "success": false,
+      "details": "No auth cookies available",
+      "timestamp": "2026-01-12T18:19:40.082340"
+    },
+    {
+      "test": "Excel File Exists",
+      "success": true,
+      "details": "Found at /app/backend/workout_app_data.xlsx",
+      "timestamp": "2026-01-12T18:19:40.082373"
+    },
+    {
+      "test": "Excel Users Sheet Structure",
+      "success": true,
+      "details": "All required columns present",
+      "timestamp": "2026-01-12T18:19:40.155675"
+    },
+    {
+      "test": "Excel Workouts Sheet Structure",
+      "success": true,
+      "details": "All required columns present",
+      "timestamp": "2026-01-12T18:19:40.155716"
+    },
+    {
+      "test": "Test User in Excel",
+      "success": true,
+      "details": "User 'TestUser_181939' found",
+      "timestamp": "2026-01-12T18:19:40.155791"
+    }
+  ]
+}
