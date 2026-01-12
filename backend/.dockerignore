@@ -37,4 +37,3 @@ htmlcov/
 
 # Data (will be mounted as volume)
 *.xlsx
-data/
