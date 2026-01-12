@@ -65,7 +65,8 @@ def init_excel():
 
 def read_users():
     init_excel()
-    return pd.read_excel(EXCEL_FILE, sheet_name='users')
+    df = pd.read_excel(EXCEL_FILE, sheet_name='users', dtype={'pin': str})
+    return df
 
 def read_workouts():
     init_excel()
