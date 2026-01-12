@@ -311,10 +311,21 @@ async def mark_workout(session_id: Optional[str] = Cookie(None)):
 # Include the router in the main app
 app.include_router(api_router)
 
+# Get CORS origins - support both wildcard and specific origins
+cors_origins_str = os.environ.get('CORS_ORIGINS', '*')
+if cors_origins_str == '*':
+    # For credentials mode, we need specific origins
+    cors_origins = [
+        "http://localhost:3000",
+        "https://streakfit.preview.emergentagent.com"
+    ]
+else:
+    cors_origins = cors_origins_str.split(',')
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
