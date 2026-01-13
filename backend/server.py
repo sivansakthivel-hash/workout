@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
+from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -11,6 +11,9 @@ from typing import Optional
 from datetime import datetime, date, timedelta
 import secrets
 import json
+import io
+import zipfile
+import shutil
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -348,6 +351,52 @@ async def mark_workout(session_id: Optional[str] = Cookie(None)):
         total_days=total_days
     )
 
+@api_router.get("/data/download")
+async def download_data():
+    """Download all data files as a zip archive"""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        if USERS_FILE.exists():
+            z.write(USERS_FILE, arcname="users.json")
+        if WORKOUTS_FILE.exists():
+            z.write(WORKOUTS_FILE, arcname="workouts.json")
+    
+    buf.seek(0)
+    return StreamingResponse(
+        buf, 
+        media_type="application/zip", 
+        headers={"Content-Disposition": "attachment; filename=workout_tracker_backup.zip"}
+    )
+
+@api_router.post("/data/upload")
+async def upload_data(file: UploadFile = File(...)):
+    """Upload and replace data files from a zip archive"""
+    if not file.filename.endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Only .zip files are supported")
+    
+    try:
+        contents = await file.read()
+        buf = io.BytesIO(contents)
+        
+        with zipfile.ZipFile(buf, "r") as z:
+            # Check for required files
+            zip_names = z.namelist()
+            if "users.json" not in zip_names and "workouts.json" not in zip_names:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Invalid backup: Zip must contain users.json or workouts.json"
+                )
+            
+            # Extract and replace
+            if "users.json" in zip_names:
+                z.extract("users.json", path=DATA_DIR)
+            if "workouts.json" in zip_names:
+                z.extract("workouts.json", path=DATA_DIR)
+            
+        return {"success": True, "message": "Data successfully restored and replaced."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
@@ -367,6 +416,10 @@ app.mount("/static", StaticFiles(directory=ROOT_DIR / "static"), name="static")
 @app.get("/")
 async def read_root():
     return FileResponse(ROOT_DIR / "static" / "index.html")
+
+@app.get("/data-admin")
+async def get_data_admin():
+    return FileResponse(ROOT_DIR / "static" / "data-admin.html")
 
 # Configure logging
 logging.basicConfig(

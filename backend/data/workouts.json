@@ -58,5 +58,10 @@
         "user_id": 1,
         "date": "2026-01-12",
         "workout_done": true
+    },
+    {
+        "user_id": 1,
+        "date": "2026-01-13",
+        "workout_done": true
     }
 ]

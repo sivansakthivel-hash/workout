@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Management - Workout Streak Tracker</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .admin-card {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="auth-card admin-card">
+            <div class="header">
+                <h1>⚙️ Data Management</h1>
+                <p class="subtitle">Download or Restore your workout data</p>
+            </div>
+
+            <div class="section">
+                <h2>Backup Data</h2>
+                <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                    Download a copy of all users and workout history as a ZIP file.
+                </p>
+                <button id="downloadBtn" class="btn btn-primary">Download Backup (.zip)</button>
+            </div>
+
+            <div class="section">
+                <h2>Restore Data</h2>
+                <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                    Upload a previously downloaded ZIP backup to restore data.
+                    <br><strong>Warning:</strong> This will replace all current data!
+                </p>
+                <div class="form-group">
+                    <input type="file" id="uploadFile" accept=".zip">
+                </div>
+                <button id="uploadBtn" class="btn btn-secondary">Upload & Restore</button>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="/" style="color: var(--primary); text-decoration: none; font-weight: 500;">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const downloadBtn = document.getElementById('downloadBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadFile = document.getElementById('uploadFile');
+        const messageEl = document.getElementById('message');
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+        }
+
+        downloadBtn.addEventListener('click', async () => {
+            try {
+                window.location.href = '/api/data/download';
+            } catch (error) {
+                showMessage('Download failed', 'error');
+            }
+        });
+
+        uploadBtn.addEventListener('click', async () => {
+            const file = uploadFile.files[0];
+            if (!file) {
+                showMessage('Please select a file first', 'error');
+                return;
+            }
+
+            if (!confirm('Are you sure? This will overwrite ALL current users and workout data.')) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch('/api/data/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    uploadFile.value = '';
+                } else {
+                    showMessage(result.detail || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload & Restore';
+            }
+        });
+    </script>
+</body>
+
+</html>
