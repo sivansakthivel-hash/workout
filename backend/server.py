@@ -85,14 +85,24 @@ def init_data():
 def read_users():
     """Read users from JSON file"""
     init_data()
-    with open(USERS_FILE, 'r') as f:
-        return json.load(f)
+    try:
+        if os.path.exists(USERS_FILE) and os.path.getsize(USERS_FILE) > 0:
+            with open(USERS_FILE, 'r') as f:
+                return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        pass
+    return []
 
 def read_workouts():
     """Read workouts from JSON file"""
     init_data()
-    with open(WORKOUTS_FILE, 'r') as f:
-        return json.load(f)
+    try:
+        if os.path.exists(WORKOUTS_FILE) and os.path.getsize(WORKOUTS_FILE) > 0:
+            with open(WORKOUTS_FILE, 'r') as f:
+                return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        pass
+    return []
 
 def save_users(users):
     """Save users to JSON file"""
