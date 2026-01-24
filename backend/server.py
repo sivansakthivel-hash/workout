@@ -471,8 +471,8 @@ async def ping_home_endpoint():
         except Exception as e:
             logger.error(f"Failed to ping home endpoint: {e}")
 
-async def hourly_backup_and_email():
-    """Background task to zip data and email it every hour"""
+async def daily_backup_and_email():
+    """Background task to zip data and email it every day"""
     try:
         # Create Zip in memory
         buf = io.BytesIO()
@@ -485,14 +485,14 @@ async def hourly_backup_and_email():
         zip_data = buf.getvalue()
         
         # Email configuration from environment
-        recipient = "zyx@gmail.com"
+        recipient = "sivanhash@gmail.com"
         smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
         smtp_port = int(os.getenv("SMTP_PORT", 587))
         smtp_user = os.getenv("SMTP_USER")
         smtp_pass = os.getenv("SMTP_PASS")
         
         if not smtp_user or not smtp_pass:
-            logger.warning("SMTP credentials (SMTP_USER/SMTP_PASS) not set. Hourly backup email skipped.")
+            logger.warning("SMTP credentials (SMTP_USER/SMTP_PASS) not set. Daily backup email skipped.")
             return
 
         # Prepare Email
@@ -501,7 +501,7 @@ async def hourly_backup_and_email():
         msg['From'] = smtp_user
         msg['To'] = recipient
         
-        msg.attach(MIMEText("Attached is the hourly backup of the workout tracker data files (users and workouts).", 'plain'))
+        msg.attach(MIMEText("Attached is the daily backup of the workout tracker data files (users and workouts).", 'plain'))
         
         attachment = MIMEApplication(zip_data, Name="backup.zip")
         attachment['Content-Disposition'] = 'attachment; filename="workout_data_backup.zip"'
@@ -513,9 +513,9 @@ async def hourly_backup_and_email():
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
             
-        logger.info(f"Hourly backup successfully emailed to {recipient}")
+        logger.info(f"Daily backup successfully emailed to {recipient}")
     except Exception as e:
-        logger.error(f"Failed to perform hourly backup/email: {e}")
+        logger.error(f"Failed to perform daily backup/email: {e}")
 
 # Initialize Data and Tasks on startup
 @app.on_event("startup")
@@ -529,8 +529,8 @@ async def startup_event():
     # Task 1: Hit home endpoint every 5 minutes
     scheduler.add_job(ping_home_endpoint, 'interval', minutes=1, id='ping_task')
     
-    # Task 2: Backup and email every hour
-    scheduler.add_job(hourly_backup_and_email, 'interval', hours=1, id='backup_task')
+    # Task 2: Backup and email every day
+    scheduler.add_job(daily_backup_and_email, 'interval', days=1, id='backup_task')
     
     scheduler.start()
     logger.info("Background scheduler started (Ping & Backup tasks)")
