@@ -425,7 +425,9 @@ async def upload_data(file: UploadFile = File(...)):
             if "workouts.json" in zip_names:
                 z.extract("workouts.json", path=DATA_DIR)
             
-        return {"success": True, "message": "Data successfully restored and replaced."}
+        # Clear active sessions to prevent state issues with new data
+        sessions.clear()
+        return {"success": True, "message": "Data successfully restored. Please re-login."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
