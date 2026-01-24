@@ -383,6 +383,46 @@ async def mark_workout(req: MarkWorkoutRequest = MarkWorkoutRequest(), session_i
         total_days=total_days
     )
 
+@api_router.post("/unmark-workout", response_model=MarkWorkoutResponse)
+async def unmark_workout(req: MarkWorkoutRequest, session_id: Optional[str] = Cookie(None)):
+    if not session_id or session_id not in sessions:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user_data = sessions[session_id]
+    user_id = user_data['user_id']
+    
+    if not req.date:
+        raise HTTPException(status_code=400, detail="Date is required to unmark")
+    
+    workouts = read_workouts()
+    
+    # Filter out the specific workout
+    original_len = len(workouts)
+    workouts = [w for w in workouts if not (w['user_id'] == user_id and w['date'] == req.date)]
+    
+    if len(workouts) == original_len:
+        current_streak = calculate_streak(user_id, workouts)
+        total_days = len([w for w in workouts if w['user_id'] == user_id and w['workout_done']])
+        return MarkWorkoutResponse(
+            success=False,
+            message="No workout found for this date",
+            streak=current_streak,
+            total_days=total_days
+        )
+        
+    save_workouts(workouts)
+    
+    # Calculate new stats
+    current_streak = calculate_streak(user_id, workouts)
+    total_days = len([w for w in workouts if w['user_id'] == user_id and w['workout_done']])
+    
+    return MarkWorkoutResponse(
+        success=True,
+        message=f"Workout removed for {req.date}!",
+        streak=current_streak,
+        total_days=total_days
+    )
+
 @api_router.get("/data/download")
 async def download_data():
     """Download all data files as a zip archive"""

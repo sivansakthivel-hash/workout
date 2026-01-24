@@ -227,6 +227,9 @@
 
                         if (workoutDates.has(dateStr)) {
                             td.classList.add('workout-done');
+                            td.classList.add('can-unmark');
+                            const capturedDate = dateStr;
+                            td.onclick = () => handleUnmarkWorkout(capturedDate);
                         } else if (cellDate <= todayObj) {
                             // Any past date or today can be marked if not done
                             td.classList.add('quick-mark');
@@ -283,6 +286,28 @@
                     btn.disabled = false;
                     btn.textContent = originalText;
                 }
+            }
+        }
+
+        async function handleUnmarkWorkout(date) {
+            if (!confirm(`Delete workout record for ${date}?`)) return;
+
+            try {
+                const response = await fetch('/api/unmark-workout', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date })
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showActionMessage('🗑️ Entry removed', 'success');
+                    setTimeout(loadDashboard, 800);
+                } else {
+                    showActionMessage(result.message || 'Failed', 'error');
+                }
+            } catch (error) {
+                showActionMessage('Network error', 'error');
             }
         }
         function getTodayStr() {

@@ -256,6 +256,24 @@ body {
     text-align: center;
 }
 
+.date-cell.can-unmark {
+    cursor: pointer;
+}
+
+.date-cell.can-unmark:hover {
+    background: #fee2e2;
+}
+
+.date-cell.can-unmark:hover .date-num {
+    color: #dc2626;
+}
+
+.date-cell.can-unmark:hover::after {
+    content: '🗑️ REMOVE';
+    background: #fca5a5;
+    color: #991b1b;
+}
+
 .date-cell.is-today {
     border: 3px solid var(--primary);
     z-index: 2;
