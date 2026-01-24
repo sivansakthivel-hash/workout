@@ -1,87 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Streak Tracker - Login</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <title>Workout Tracker | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css?v=5">
 </head>
-<body>
-    <div class="container">
-        <div class="auth-card">
-            <div class="header">
-                <h1>💪 Workout Streak Tracker</h1>
-                <p class="subtitle">Track your daily workout streak</p>
-            </div>
 
-            <!-- Tab Navigation -->
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="login">Login</button>
-                <button class="tab-btn" data-tab="register">Register</button>
-            </div>
+<body>
+    <div class="auth-container">
+        <main class="auth-card">
+            <header class="auth-header">
+                <span class="logo">💪</span>
+                <h1>Workout Tracker</h1>
+                <p>Welcome back! Let's hit those goals.</p>
+            </header>
+
+            <nav class="auth-tabs">
+                <button class="auth-tab-btn active" data-tab="login">Login</button>
+                <button class="auth-tab-btn" data-tab="register">Register</button>
+            </nav>
 
             <!-- Login Form -->
-            <div id="login-form" class="form-container active">
+            <section id="login-form-container" class="form-container active">
                 <form id="loginForm">
-                    <div class="form-group">
-                        <label for="login-name">Name</label>
-                        <input type="text" id="login-name" name="name" required autocomplete="username">
+                    <div class="auth-form-group">
+                        <label for="login-name">Username or Name</label>
+                        <input type="text" id="login-name" name="name" class="auth-input" placeholder="e.g. Sivan"
+                            required autocomplete="username">
                     </div>
-                    <div class="form-group">
-                        <label for="login-pin">4-Digit PIN</label>
-                        <input type="password" id="login-pin" name="pin" maxlength="4" pattern="[0-9]{4}" required autocomplete="current-password">
-                        <small>Enter your 4-digit PIN</small>
+                    <div class="auth-form-group">
+                        <label for="login-pin">4-Digit Access PIN</label>
+                        <input type="password" id="login-pin" name="pin" class="auth-input" maxlength="4"
+                            placeholder="••••" pattern="[0-9]{4}" required autocomplete="current-password">
                     </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="auth-submit-btn">Continue to Dashboard</button>
                 </form>
-            </div>
+            </section>
 
             <!-- Register Form -->
-            <div id="register-form" class="form-container">
+            <section id="register-form-container" class="form-container">
                 <form id="registerForm">
-                    <div class="form-group">
-                        <label for="register-name">Name</label>
-                        <input type="text" id="register-name" name="name" required autocomplete="username">
+                    <div class="auth-form-group">
+                        <label for="register-name">Display Name</label>
+                        <input type="text" id="register-name" name="name" class="auth-input"
+                            placeholder="How should we call you?" required autocomplete="username">
                     </div>
-                    <div class="form-group">
+                    <div class="auth-form-group">
                         <label for="register-pin">Create 4-Digit PIN</label>
-                        <input type="password" id="register-pin" name="pin" maxlength="4" pattern="[0-9]{4}" required autocomplete="new-password">
-                        <small>Choose a 4-digit PIN (numbers only)</small>
+                        <input type="password" id="register-pin" name="pin" class="auth-input" maxlength="4"
+                            placeholder="Choose 4 digits" pattern="[0-9]{4}" required autocomplete="new-password">
                     </div>
-                    <div class="form-group">
-                        <label for="register-pin-confirm">Confirm PIN</label>
-                        <input type="password" id="register-pin-confirm" name="pin_confirm" maxlength="4" pattern="[0-9]{4}" required autocomplete="new-password">
+                    <div class="auth-form-group">
+                        <label for="register-pin-confirm">Confirm Secret PIN</label>
+                        <input type="password" id="register-pin-confirm" name="pin_confirm" class="auth-input"
+                            maxlength="4" placeholder="Repeat PIN" pattern="[0-9]{4}" required
+                            autocomplete="new-password">
                     </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="submit" class="auth-submit-btn">Create Free Account</button>
                 </form>
-            </div>
+            </section>
 
-            <!-- Error/Success Messages -->
-            <div id="message" class="message"></div>
-        </div>
+            <div id="auth-message" class="auth-message"></div>
+        </main>
     </div>
 
-    <script src="/static/js/app.js"></script>
     <script>
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        // Tab switching logic
+        document.querySelectorAll('.auth-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tab = btn.dataset.tab;
-                
-                // Update active tab button
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+                // Update tabs
+                document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
-                // Update active form
+
+                // Update forms
                 document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
-                document.getElementById(`${tab}-form`).classList.add('active');
-                
-                // Clear message
-                clearMessage();
+                document.getElementById(`${tab}-form-container`).classList.add('active');
+
+                // Clear state
+                const msg = document.getElementById('auth-message');
+                msg.style.display = 'none';
+
+                // Update header text based on tab
+                const headerP = document.querySelector('.auth-header p');
+                headerP.textContent = tab === 'login' ? 'Welcome back! Let\'s hit those goals.' : 'Join the community and track your wins.';
             });
         });
 
-        // Login form handler
+        // Shared display message function
+        function showMsg(text, type) {
+            const el = document.getElementById('auth-message');
+            el.textContent = text;
+            el.className = `auth-message ${type}`;
+            el.style.display = 'block';
+        }
+
+        // Login Handler
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -90,10 +110,10 @@
                 pin: formData.get('pin')
             };
 
-            if (data.pin.length !== 4 || !/^\d{4}$/.test(data.pin)) {
-                showMessage('PIN must be exactly 4 digits', 'error');
-                return;
-            }
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
 
             try {
                 const response = await fetch('/api/login', {
@@ -106,17 +126,21 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showMessage('Login successful! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = '/static/dashboard.html', 1000);
+                    showMsg('✅ Security cleared! Entering...', 'success');
+                    setTimeout(() => window.location.href = '/static/dashboard.html', 800);
                 } else {
-                    showMessage(result.detail || 'Login failed', 'error');
+                    showMsg('❌ ' + (result.detail || 'Access denied. Check your name or PIN.'), 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
             } catch (error) {
-                showMessage('Network error. Please try again.', 'error');
+                showMsg('❌ Connection error. Is the server running?', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         });
 
-        // Register form handler
+        // Register Handler
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -126,16 +150,15 @@
                 pin_confirm: formData.get('pin_confirm')
             };
 
-            // Validation
-            if (data.pin.length !== 4 || !/^\d{4}$/.test(data.pin)) {
-                showMessage('PIN must be exactly 4 digits', 'error');
+            if (data.pin !== data.pin_confirm) {
+                showMsg('⚠️ PINs do not match. Please try again.', 'error');
                 return;
             }
 
-            if (data.pin !== data.pin_confirm) {
-                showMessage('PINs do not match', 'error');
-                return;
-            }
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Creating Account...';
 
             try {
                 const response = await fetch('/api/register', {
@@ -148,27 +171,20 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showMessage('Registration successful! Redirecting...', 'success');
+                    showMsg('🎉 Account ready! Welcome aboard.', 'success');
                     setTimeout(() => window.location.href = '/static/dashboard.html', 1000);
                 } else {
-                    showMessage(result.detail || 'Registration failed', 'error');
+                    showMsg('❌ ' + (result.detail || 'Something went wrong.'), 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
             } catch (error) {
-                showMessage('Network error. Please try again.', 'error');
+                showMsg('❌ Registration failed. Try again later.', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         });
-
-        function showMessage(text, type) {
-            const messageEl = document.getElementById('message');
-            messageEl.textContent = text;
-            messageEl.className = `message ${type}`;
-            messageEl.style.display = 'block';
-        }
-
-        function clearMessage() {
-            const messageEl = document.getElementById('message');
-            messageEl.style.display = 'none';
-        }
     </script>
 </body>
+
 </html>
