@@ -456,7 +456,7 @@ async def ping_home_endpoint():
     async with httpx.AsyncClient() as client:
         try:
             # We use localhost:8000 as it's internal to the container
-            response = await client.get("http://localhost:8000/")
+            response = await client.get("https://workout-t9mo.onrender.com/")
             logger.info(f"Hourly self-ping status: {response.status_code}")
         except Exception as e:
             logger.error(f"Failed to ping home endpoint: {e}")
