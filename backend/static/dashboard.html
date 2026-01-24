@@ -4,337 +4,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Streak Tracker - Dashboard</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <title>Dashboard | Workout Streak Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css?v=3">
 </head>
 
 <body>
-    <div class="container">
-        <div class="dashboard">
-            <!-- Header -->
-            <div class="dashboard-header">
-                <div>
-                    <h1>💪 Workout Tracker</h1>
-                    <p class="welcome">Welcome, <span id="user-name">...</span>!</p>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="app-icon-container">💪</div>
+                <div class="header-text">
+                    <h1>Workout Tracker</h1>
+                    <p class="welcome-text">Hey <span id="user-name">...</span>, let's crush it today!</p>
                 </div>
-                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+            <button id="logout-btn" class="logout-btn">
+                <span>Sign Out</span>
+            </button>
+        </header>
+
+        <!-- Top Stats Row -->
+        <section class="stats-row">
+            <div class="stat-box streak-box">
+                <div class="box-icon">🔥</div>
+                <div class="box-info">
+                    <span class="label">Current Streak</span>
+                    <h2 id="current-streak">0</h2>
+                    <span class="subtext">Days in a row</span>
+                </div>
             </div>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card streak">
-                    <div class="stat-icon">🔥</div>
-                    <div class="stat-content">
-                        <h3>Current Streak</h3>
-                        <p class="stat-value" id="current-streak">0</p>
-                        <small>days in a row</small>
+            <div class="stat-box total-box">
+                <div class="box-icon">📈</div>
+                <div class="box-info">
+                    <span class="label">Total Workouts</span>
+                    <h2 id="total-workouts">0</h2>
+                    <span class="subtext">Sessions tracked</span>
+                </div>
+            </div>
+
+            <div class="stat-box status-box" id="today-card">
+                <div class="box-icon" id="today-icon">⚡</div>
+                <div class="box-info">
+                    <span class="label" id="today-date-top">Today</span>
+                    <h2 id="today-status-text">Pending</h2>
+                    <span class="subtext" id="today-status-sub">Mark as complete</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main class="dashboard-grid">
+            <!-- Calendar Table Area -->
+            <div class="calendar-container-panel">
+                <div class="panel-header">
+                    <div class="title-group">
+                        <h2>Workout Calendar</h2>
+                        <p>Track your consistency visually</p>
+                    </div>
+                    <div class="calendar-controls">
+                        <button id="prev-month" class="nav-btn">←</button>
+                        <span id="current-month-display">...</span>
+                        <button id="next-month" class="nav-btn">→</button>
                     </div>
                 </div>
 
-                <div class="stat-card total">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-content">
-                        <h3>Total Workouts</h3>
-                        <p class="stat-value" id="total-workouts">0</p>
-                        <small>all time</small>
+                <div class="calendar-table-scroll">
+                    <table class="workout-table">
+                        <thead>
+                            <tr>
+                                <th>Sun</th>
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                                <th>Sat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="calendar-footer">
+                    <div class="legend">
+                        <div class="legend-item"><span class="dot done"></span> Completed</div>
+                        <div class="legend-item"><span class="dot today"></span> Today</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="stat-card date">
-                    <div class="stat-icon">📅</div>
-                    <div class="stat-content">
-                        <h3>Today</h3>
-                        <p class="stat-value" id="today-date">-</p>
-                        <small id="today-status">Not marked yet</small>
+            <!-- Side Sidebar -->
+            <aside class="dashboard-sidebar">
+                <div class="quick-action-panel">
+                    <button id="mark-workout-btn" class="primary-mark-btn">
+                        <span class="btn-check">✓</span>
+                        Mark Done For Today
+                    </button>
+                    <p id="action-message" class="action-message"></p>
+                </div>
+
+                <div class="leaderboard-panel">
+                    <div class="sidebar-header">
+                        <h3>🏆 Leaderboard</h3>
+                    </div>
+                    <div id="leaderboard" class="leaderboard-list">
+                        <p class="loading-state">Syncing ranks...</p>
+                    </div>
+                    <div class="pagination-footer" id="leaderboard-pagination" style="display: none;">
+                        <button id="prev-page" class="pager-btn">←</button>
+                        <span id="page-info">1/1</span>
+                        <button id="next-page" class="pager-btn">→</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Mark Workout Button -->
-            <div class="action-section">
-                <button id="mark-workout-btn" class="btn btn-primary btn-large">
-                    ✓ Mark Today's Workout
-                </button>
-                <p id="action-message" class="action-message"></p>
-            </div>
-
-
-            <!-- Leaderboard -->
-            <div class="leaderboard-section">
-                <h2>🏆 Leaderboard</h2>
-                <div id="leaderboard" class="leaderboard-list">
-                    <p class="loading">Loading leaderboard...</p>
-                </div>
-                <div class="pagination" id="leaderboard-pagination" style="display: none;">
-                    <button id="prev-page" class="pagination-btn">← Previous</button>
-                    <span id="page-info" class="page-info">Page 1</span>
-                    <button id="next-page" class="pagination-btn">Next →</button>
-                </div>
-            </div>
-
-            <!-- Workout History -->
-            <div class="history-section">
-                <h2>Recent Workout History</h2>
-                <div id="workout-history" class="history-list">
-                    <p class="loading">Loading history...</p>
-                </div>
-            </div>
-        </div>
+            </aside>
+        </main>
     </div>
 
     <script src="/static/js/app.js"></script>
     <script>
         let dashboardData = null;
-
-        // Load dashboard data on page load
-        async function loadDashboard() {
-            try {
-                const response = await fetch('/api/dashboard', {
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.href = '/';
-                        return;
-                    }
-                    throw new Error('Failed to load dashboard');
-                }
-
-                dashboardData = await response.json();
-                updateDashboard(dashboardData);
-
-                // Load leaderboard
-                loadLeaderboard();
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                showActionMessage('Failed to load dashboard data', 'error');
-            }
-        }
-
-        // Load leaderboard data
-        async function loadLeaderboard() {
-            try {
-                const response = await fetch('/api/leaderboard', {
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to load leaderboard');
-                }
-
-                const leaderboard = await response.json();
-                updateLeaderboard(leaderboard);
-            } catch (error) {
-                console.error('Error loading leaderboard:', error);
-                document.getElementById('leaderboard').innerHTML = '<p class="empty-state">Failed to load leaderboard</p>';
-            }
-        }
-
-        // Leaderboard pagination state
+        let currentCalendarDate = new Date();
+        let workoutDates = new Set();
         let allLeaderboardData = [];
         let currentPage = 1;
         const itemsPerPage = 10;
 
-        function updateLeaderboard(leaderboard) {
-            const leaderboardEl = document.getElementById('leaderboard');
-            const paginationEl = document.getElementById('leaderboard-pagination');
-
-            if (!leaderboard || leaderboard.length === 0) {
-                leaderboardEl.innerHTML = '<p class="empty-state">No users yet</p>';
-                paginationEl.style.display = 'none';
-                return;
-            }
-
-            // Store all data
-            allLeaderboardData = leaderboard;
-
-            // Show pagination if more than 10 items
-            if (leaderboard.length > itemsPerPage) {
-                paginationEl.style.display = 'flex';
-                renderLeaderboardPage(currentPage);
-            } else {
-                paginationEl.style.display = 'none';
-                renderLeaderboardItems(leaderboard);
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard', { credentials: 'include' });
+                if (!response.ok) {
+                    if (response.status === 401) window.location.href = '/';
+                    return;
+                }
+                dashboardData = await response.json();
+                renderDashboard(dashboardData);
+                loadLeaderboard();
+            } catch (error) {
+                console.error(error);
+                showActionMessage('Sync failed', 'error');
             }
         }
 
-        function renderLeaderboardPage(page) {
-            const totalPages = Math.ceil(allLeaderboardData.length / itemsPerPage);
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = allLeaderboardData.slice(startIndex, endIndex);
-
-            renderLeaderboardItems(pageData);
-
-            // Update pagination controls
-            document.getElementById('page-info').textContent = `Page ${page} of ${totalPages}`;
-            document.getElementById('prev-page').disabled = page === 1;
-            document.getElementById('next-page').disabled = page === totalPages;
-        }
-
-        function renderLeaderboardItems(items) {
-            const leaderboardEl = document.getElementById('leaderboard');
-
-            leaderboardEl.innerHTML = items.map(entry => {
-                const rankBadge = entry.rank <= 3 ? getRankEmoji(entry.rank) : `#${entry.rank}`;
-                const currentUserClass = entry.is_current_user ? 'current-user' : '';
-
-                return `
-                    <div class="leaderboard-item ${currentUserClass}">
-                        <span class="leaderboard-rank">${rankBadge}</span>
-                        <span class="leaderboard-name">${entry.name}${entry.is_current_user ? ' (You)' : ''}</span>
-                        <div class="leaderboard-stats">
-                            <span class="leaderboard-streak">🔥 ${entry.current_streak}</span>
-                            <span class="leaderboard-total">📊 ${entry.total_workout_days}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Pagination button handlers
-        document.getElementById('prev-page').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderLeaderboardPage(currentPage);
-            }
-        });
-
-        document.getElementById('next-page').addEventListener('click', () => {
-            const totalPages = Math.ceil(allLeaderboardData.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderLeaderboardPage(currentPage);
-            }
-        });
-
-        function getRankEmoji(rank) {
-            const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-            return medals[rank] || `#${rank}`;
-        }
-
-        function updateDashboard(data) {
-            // Update user name
+        function renderDashboard(data) {
             document.getElementById('user-name').textContent = data.name;
-
-            // Update stats
             document.getElementById('current-streak').textContent = data.current_streak;
             document.getElementById('total-workouts').textContent = data.total_workout_days;
 
-            // Update today's date
-            const today = new Date(data.today_date);
-            document.getElementById('today-date').textContent = today.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric'
-            });
+            const todayDate = new Date(data.today_date);
+            document.getElementById('today-date-top').textContent = todayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-            // Update today's status
-            const statusEl = document.getElementById('today-status');
+            const todayCard = document.getElementById('today-card');
+            const todayText = document.getElementById('today-status-text');
+            const todaySub = document.getElementById('today-status-sub');
+            const todayIcon = document.getElementById('today-icon');
             const markBtn = document.getElementById('mark-workout-btn');
 
             if (data.today_marked) {
-                statusEl.textContent = '✓ Completed';
-                statusEl.style.color = '#10b981';
+                todayText.textContent = 'Completed';
+                todaySub.textContent = 'Goal reached!';
+                todayIcon.textContent = '✅';
+                todayCard.classList.add('status-done');
                 markBtn.disabled = true;
-                markBtn.textContent = '✓ Already Marked Today';
+                markBtn.textContent = '✓ Target Achieved';
             } else {
-                statusEl.textContent = 'Not marked yet';
-                statusEl.style.color = '#6b7280';
+                todayText.textContent = 'Pending';
+                todaySub.textContent = 'Click to mark';
+                todayIcon.textContent = '⚡';
+                todayCard.classList.remove('status-done');
                 markBtn.disabled = false;
-                markBtn.textContent = '✓ Mark Today\'s Workout';
+                markBtn.textContent = '✓ Mark Done For Today';
+                todayCard.onclick = () => handleMarkWorkout();
             }
 
-            // Update workout history
-            updateHistory(data.workout_history);
+            workoutDates = new Set(data.workout_history.map(w => w.date));
+            renderCalendar();
         }
 
-        function updateHistory(history) {
-            const historyEl = document.getElementById('workout-history');
+        function renderCalendar() {
+            const tbody = document.getElementById('calendar-body');
+            const display = document.getElementById('current-month-display');
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
 
-            if (!history || history.length === 0) {
-                historyEl.innerHTML = '<p class="empty-state">No workout history yet. Start your streak today!</p>';
-                return;
+            display.textContent = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const todayStr = getTodayStr();
+            const todayObj = new Date();
+            todayObj.setHours(0, 0, 0, 0);
+
+            tbody.innerHTML = '';
+            let date = 1;
+
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('tr');
+                let rowAdded = false;
+                for (let j = 0; j < 7; j++) {
+                    const td = document.createElement('td');
+                    if (i === 0 && j < firstDay) {
+                        td.className = 'empty-cell';
+                    } else if (date > lastDate) {
+                        td.className = 'empty-cell';
+                    } else {
+                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                        const cellDate = new Date(year, month, date);
+
+                        td.className = 'date-cell';
+                        td.innerHTML = `<div class="date-num">${date}</div>`;
+
+                        if (workoutDates.has(dateStr)) {
+                            td.classList.add('workout-done');
+                        } else if (cellDate <= todayObj) {
+                            // Any past date or today can be marked if not done
+                            td.classList.add('quick-mark');
+                            const capturedDate = dateStr;
+                            td.onclick = () => handleMarkWorkout(capturedDate);
+                        }
+
+                        if (dateStr === todayStr) {
+                            td.classList.add('is-today');
+                        }
+                        date++;
+                        rowAdded = true;
+                    }
+                    row.appendChild(td);
+                }
+                if (rowAdded) tbody.appendChild(row);
             }
-
-            historyEl.innerHTML = history.map(workout => {
-                const date = new Date(workout.date);
-                const dateStr = date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-
-                return `
-                    <div class="history-item">
-                        <span class="history-icon">✓</span>
-                        <span class="history-date">${dateStr}</span>
-                        <span class="history-status">${workout.status}</span>
-                    </div>
-                `;
-            }).join('');
         }
 
-        // Mark workout handler
-        document.getElementById('mark-workout-btn').addEventListener('click', async () => {
+        async function handleMarkWorkout(date = null) {
+            // Ignore the event object if called directly via onclick
+            if (date && typeof date !== 'string') date = null;
+
             const btn = document.getElementById('mark-workout-btn');
-            btn.disabled = true;
-            btn.textContent = 'Marking...';
+            const originalText = btn.textContent;
+
+            if (!date) {
+                if (btn.disabled) return;
+                btn.disabled = true;
+                btn.textContent = 'Syncing...';
+            }
 
             try {
                 const response = await fetch('/api/mark-workout', {
                     method: 'POST',
-                    credentials: 'include'
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date })
                 });
-
                 const result = await response.json();
-
                 if (response.ok && result.success) {
-                    showActionMessage(`🎉 ${result.message} Streak: ${result.streak} days!`, 'success');
-                    // Reload dashboard and leaderboard to update stats
-                    setTimeout(() => {
-                        loadDashboard();
-                        loadLeaderboard();
-                    }, 1000);
+                    showActionMessage('🎉 Entry recorded!', 'success');
+                    setTimeout(loadDashboard, 800);
                 } else {
-                    showActionMessage(result.message || 'Failed to mark workout', 'error');
-                    btn.disabled = false;
-                    btn.textContent = '✓ Mark Today\'s Workout';
+                    showActionMessage(result.message || 'Failed', 'error');
+                    if (!date) {
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    }
                 }
             } catch (error) {
-                showActionMessage('Network error. Please try again.', 'error');
-                btn.disabled = false;
-                btn.textContent = '✓ Mark Today\'s Workout';
+                showActionMessage('Network error', 'error');
+                if (!date) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
             }
-        });
-
-        // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-            try {
-                await fetch('/api/logout', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-                window.location.href = '/';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = '/';
-            }
-        });
-
-        function showActionMessage(text, type) {
-            const messageEl = document.getElementById('action-message');
-            messageEl.textContent = text;
-            messageEl.className = `action-message ${type}`;
-            messageEl.style.display = 'block';
-
-            setTimeout(() => {
-                messageEl.style.display = 'none';
-            }, 5000);
+        }
+        function getTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Load dashboard on page load
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard', { credentials: 'include' });
+                if (response.ok) {
+                    allLeaderboardData = await response.json();
+                    renderLeaderboardPage(1);
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        function renderLeaderboardPage(page) {
+            currentPage = page;
+            const container = document.getElementById('leaderboard');
+            const totalPages = Math.ceil(allLeaderboardData.length / itemsPerPage);
+            const data = allLeaderboardData.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
+            if (data.length === 0) {
+                container.innerHTML = '<p class="empty">No entries yet</p>';
+                return;
+            }
+
+            container.innerHTML = data.map(u => `
+                <div class="rank-item ${u.is_current_user ? 'self' : ''}">
+                    <span class="rank-id">${u.rank <= 3 ? ['🥇', '🥈', '🥉'][u.rank - 1] : '#' + u.rank}</span>
+                    <span class="user-info">${u.name}${u.is_current_user ? ' (Me)' : ''}</span>
+                    <div class="user-stats">🔥 ${u.current_streak} | 📈 ${u.total_workout_days}</div>
+                </div>
+            `).join('');
+
+            const pag = document.getElementById('leaderboard-pagination');
+            if (allLeaderboardData.length > itemsPerPage) {
+                pag.style.display = 'flex';
+                document.getElementById('page-info').textContent = `${page}/${totalPages}`;
+                document.getElementById('prev-page').disabled = page === 1;
+                document.getElementById('next-page').disabled = page === totalPages;
+            } else {
+                pag.style.display = 'none';
+            }
+        }
+
+        document.getElementById('prev-page').onclick = () => renderLeaderboardPage(currentPage - 1);
+        document.getElementById('next-page').onclick = () => renderLeaderboardPage(currentPage + 1);
+        document.getElementById('prev-month').onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); renderCalendar(); };
+        document.getElementById('next-month').onclick = () => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); renderCalendar(); };
+        document.getElementById('mark-workout-btn').onclick = () => handleMarkWorkout();
+        document.getElementById('logout-btn').onclick = async () => { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/'; };
+
+        function showActionMessage(text, type) {
+            const el = document.getElementById('action-message');
+            el.textContent = text;
+            el.className = `action-message ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
         loadDashboard();
     </script>
 </body>

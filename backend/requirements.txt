@@ -22,3 +22,5 @@ h11==0.16.0
 click==8.3.1
 
 python-multipart
+apscheduler
+httpx

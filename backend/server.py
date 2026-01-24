@@ -14,6 +14,12 @@ import json
 import io
 import zipfile
 import shutil
+import httpx
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.mime.text import MIMEText
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -241,11 +247,10 @@ async def get_dashboard(session_id: Optional[str] = Cookie(None)):
     # Current streak
     current_streak = calculate_streak(user_id, workouts)
     
-    # Workout history (last 10)
+    # Workout history (all for calendar)
     workout_history = []
     if user_workouts:
-        # Already sorted above
-        for workout in user_workouts[:10]:
+        for workout in user_workouts:
             workout_history.append({
                 'date': workout['date'],
                 'status': 'Completed'
@@ -304,8 +309,11 @@ async def get_leaderboard(session_id: Optional[str] = Cookie(None)):
     
     return leaderboard
 
+class MarkWorkoutRequest(BaseModel):
+    date: Optional[str] = None
+
 @api_router.post("/mark-workout", response_model=MarkWorkoutResponse)
-async def mark_workout(session_id: Optional[str] = Cookie(None)):
+async def mark_workout(req: MarkWorkoutRequest = MarkWorkoutRequest(), session_id: Optional[str] = Cookie(None)):
     if not session_id or session_id not in sessions:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
@@ -314,18 +322,31 @@ async def mark_workout(session_id: Optional[str] = Cookie(None)):
     
     workouts = read_workouts()
     
+    # Use requested date or today
+    if req.date:
+        try:
+            target_date = datetime.fromisoformat(req.date).date()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    else:
+        target_date = datetime.now().date()
+        
+    target_date_str = target_date.isoformat()
     today = datetime.now().date()
-    today_str = today.isoformat()
     
-    # Check if already marked today
-    already_marked = any(w['user_id'] == user_id and w['date'] == today_str and w['workout_done'] for w in workouts)
+    # Prevent marking future dates
+    if target_date > today:
+        raise HTTPException(status_code=400, detail="Cannot mark workouts for future dates")
+    
+    # Check if already marked
+    already_marked = any(w['user_id'] == user_id and w['date'] == target_date_str and w['workout_done'] for w in workouts)
     
     if already_marked:
         current_streak = calculate_streak(user_id, workouts)
         total_days = len([w for w in workouts if w['user_id'] == user_id and w['workout_done']])
         return MarkWorkoutResponse(
             success=False,
-            message="Workout already marked for today",
+            message=f"Workout already marked for {target_date_str}",
             streak=current_streak,
             total_days=total_days
         )
@@ -333,7 +354,7 @@ async def mark_workout(session_id: Optional[str] = Cookie(None)):
     # Add new workout entry
     new_workout = {
         'user_id': user_id,
-        'date': today_str,
+        'date': target_date_str,
         'workout_done': True
     }
     
@@ -344,9 +365,10 @@ async def mark_workout(session_id: Optional[str] = Cookie(None)):
     current_streak = calculate_streak(user_id, workouts)
     total_days = len([w for w in workouts if w['user_id'] == user_id and w['workout_done']])
     
+    date_label = "today" if target_date == today else target_date_str
     return MarkWorkoutResponse(
         success=True,
-        message="Workout marked successfully!",
+        message=f"Workout marked for {date_label}!",
         streak=current_streak,
         total_days=total_days
     )
@@ -428,8 +450,77 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize Data on startup
+# Background Tasks Logic
+async def ping_home_endpoint():
+    """Background task to hit the home endpoint every hour"""
+    async with httpx.AsyncClient() as client:
+        try:
+            # We use localhost:8000 as it's internal to the container
+            response = await client.get("http://localhost:8000/")
+            logger.info(f"Hourly self-ping status: {response.status_code}")
+        except Exception as e:
+            logger.error(f"Failed to ping home endpoint: {e}")
+
+async def hourly_backup_and_email():
+    """Background task to zip data and email it every hour"""
+    try:
+        # Create Zip in memory
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            if USERS_FILE.exists():
+                z.write(USERS_FILE, arcname="users.json")
+            if WORKOUTS_FILE.exists():
+                z.write(WORKOUTS_FILE, arcname="workouts.json")
+        
+        zip_data = buf.getvalue()
+        
+        # Email configuration from environment
+        recipient = "zyx@gmail.com"
+        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", 587))
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASS")
+        
+        if not smtp_user or not smtp_pass:
+            logger.warning("SMTP credentials (SMTP_USER/SMTP_PASS) not set. Hourly backup email skipped.")
+            return
+
+        # Prepare Email
+        msg = MIMEMultipart()
+        msg['Subject'] = f"Workout Tracker Backup - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        msg['From'] = smtp_user
+        msg['To'] = recipient
+        
+        msg.attach(MIMEText("Attached is the hourly backup of the workout tracker data files (users and workouts).", 'plain'))
+        
+        attachment = MIMEApplication(zip_data, Name="backup.zip")
+        attachment['Content-Disposition'] = 'attachment; filename="workout_data_backup.zip"'
+        msg.attach(attachment)
+        
+        # Send Email
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+            
+        logger.info(f"Hourly backup successfully emailed to {recipient}")
+    except Exception as e:
+        logger.error(f"Failed to perform hourly backup/email: {e}")
+
+# Initialize Data and Tasks on startup
 @app.on_event("startup")
 async def startup_event():
     init_data()
     logger.info("JSON data initialized")
+    
+    # Initialize Scheduler
+    scheduler = AsyncIOScheduler()
+    
+    # Task 1: Hit home endpoint every 5 minutes
+    scheduler.add_job(ping_home_endpoint, 'interval', minutes=1, id='ping_task')
+    
+    # Task 2: Backup and email every hour
+    scheduler.add_job(hourly_backup_and_email, 'interval', hours=1, id='backup_task')
+    
+    scheduler.start()
+    logger.info("Background scheduler started (Ping & Backup tasks)")
